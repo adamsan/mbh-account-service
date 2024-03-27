@@ -8,11 +8,13 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.hamcrest.Matchers.*
 import org.junit.jupiter.api.TestMethodOrder
 import org.springframework.test.context.ActiveProfiles
+
+private const val ACCOUNT_URL = "/api/v1/account"
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -23,7 +25,7 @@ class AccountControllerTests(@Autowired private val mockMvc: MockMvc) {
     @Order(1)
     @Test
     fun `get accounts should return empty, when db is empty`() {
-        val result = mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/account"))
+        val result = mockMvc.perform(get(ACCOUNT_URL))
                 .andExpect(status().isOk)
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$").value(`is`(emptyList<Any>())))
@@ -32,15 +34,34 @@ class AccountControllerTests(@Autowired private val mockMvc: MockMvc) {
         // println(result.response.contentAsString)
     }
 
+    @Order(2)
+    @Test
+    fun `creating new account should return the account`() {
+        mockMvc.perform(post(ACCOUNT_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"accountHolderName\":\"John Doe\"}"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.accountHolderName").value("John Doe"))
+                .andExpect(jsonPath("$.accountNumber").isNumber)
+
+        mockMvc.perform(post(ACCOUNT_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"accountHolderName\":\"Jane Doe\"}"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.accountHolderName").value("Jane Doe"))
+                .andExpect(jsonPath("$.accountNumber").isNumber)
+    }
+
     @Order(3)
     @Test
     fun `get accounts should return all non deleted accounts`() {
-        val result = mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/account"))
+        mockMvc.perform(get(ACCOUNT_URL))
                 .andExpect(status().isOk)
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$").value(`is`(emptyList<Any>())))
-                .andReturn()
-        //.andExpect(jsonPath("$").value(emptyList<Any>())) // this fails with null, if db is empty
-        // println(result.response.contentAsString)
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].accountHolderName").value("John Doe"))
+                .andExpect(jsonPath("$[0].accountNumber").isNumber)
+                .andExpect(jsonPath("$[1].accountHolderName").value("Jane Doe"))
+                .andExpect(jsonPath("$[1].accountNumber").isNumber)
     }
 }
