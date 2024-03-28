@@ -27,6 +27,15 @@ class AccountControllerTests(@Autowired private val mockMvc: MockMvc) {
     @Autowired
     lateinit var jdbc: JdbcTemplate
 
+    companion object {
+        @JvmStatic
+        lateinit var id1: BigInteger
+
+        @JvmStatic
+        lateinit var id2: BigInteger
+    }
+
+
     @Order(1)
     @Test
     fun `get accounts should return empty, when db is empty`() {
@@ -70,7 +79,9 @@ class AccountControllerTests(@Autowired private val mockMvc: MockMvc) {
                 .andExpect(jsonPath("$[1].accountNumber").isNumber)
                 .andReturn().response.contentAsString
 
-        val idToDelete = JsonPath.parse(response).read<BigInteger>("$[1].accountNumber")
+        id1 = JsonPath.parse(response).read<BigInteger>("$[0].accountNumber")
+        id2 = JsonPath.parse(response).read<BigInteger>("$[1].accountNumber")
+        val idToDelete = id2
         mockMvc.perform(delete("$ACCOUNT_URL/$idToDelete"))
 
         mockMvc.perform(get(ACCOUNT_URL))
@@ -83,5 +94,17 @@ class AccountControllerTests(@Autowired private val mockMvc: MockMvc) {
         // check if delete does not really delete account from database
         val rows = jdbc.queryForObject<Long>("select count(*) from accounts where account_number = $idToDelete")
         assertEquals(1L, rows)
+    }
+
+    @Order(4)
+    @Test
+    fun `get accounts by id should return non deleted accounts, and not deleted accounts`() {
+        mockMvc.perform(get("$ACCOUNT_URL/$id1"))
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.accountHolderName").value("John Doe"))
+
+        mockMvc.perform(get("$ACCOUNT_URL/$id2"))
+                .andExpect(status().isNotFound)
     }
 }

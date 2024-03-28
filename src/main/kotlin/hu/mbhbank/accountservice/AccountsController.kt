@@ -24,6 +24,12 @@ class AccountsController(@Autowired private val accountsRepository: AccountsRepo
     @GetMapping
     public fun get(): List<Account> = accountsRepository.findByIsDeletedIsFalse()
 
+    @GetMapping("/{id}")
+    public fun getById(@PathVariable("id") id: BigDecimal): ResponseEntity<Account> {
+        val maybeId = accountsRepository.findByIsDeletedIsFalseAndAccountNumberEquals(id)
+        return ResponseEntity.of(maybeId)
+    }
+
     @PostMapping
     public fun post(@RequestBody newAccountDTO: NewAccountDTO): Account {
         // TODO: generate unique id with bank prefix
@@ -57,7 +63,8 @@ data class Account(
         val isDeleted: Boolean = false) {}
 
 interface AccountsRepository : JpaRepository<Account, BigDecimal> {
-    fun findByIsDeletedIsFalse() :List<Account>
+    fun findByIsDeletedIsFalse(): List<Account>
+    fun findByIsDeletedIsFalseAndAccountNumberEquals(id: BigDecimal): Optional<Account>
 }
 
 data class NewAccountDTO(val accountHolderName: String)
