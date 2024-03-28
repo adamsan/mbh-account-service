@@ -1,5 +1,6 @@
 package hu.mbhbank.accountservice
 
+import jakarta.annotation.PostConstruct
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -12,8 +13,10 @@ import org.hibernate.service.ServiceRegistry
 import org.hibernate.type.Type
 import org.hibernate.type.spi.TypeConfiguration
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.http.ResponseEntity
+import org.springframework.stereotype.Component
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 import java.util.*
@@ -21,6 +24,7 @@ import java.util.*
 @RestController
 @RequestMapping("/api/v1/account")
 class AccountsController(@Autowired private val accountsRepository: AccountsRepository) {
+
     @GetMapping
     public fun get(): List<Account> = accountsRepository.findByIsDeletedIsFalse()
 
@@ -32,7 +36,6 @@ class AccountsController(@Autowired private val accountsRepository: AccountsRepo
 
     @PostMapping
     public fun post(@RequestBody newAccountDTO: NewAccountDTO): Account {
-        // TODO: generate unique id with bank prefix
         val account = Account(null, newAccountDTO.accountHolderName)
         accountsRepository.save(account)
         return account
@@ -47,6 +50,17 @@ class AccountsController(@Autowired private val accountsRepository: AccountsRepo
         } else
             ResponseEntity.notFound().build()
     }
+}
+
+private const val BANK_ACCOUNT_PREFIX = "bank.account.prefix"
+
+@Component
+class PrefixSetterConfig() {
+    @Value("\${bank.account.prefix}")
+    public lateinit var bankAccountPrefix: String
+
+    @PostConstruct
+    fun postConstruct() = System.setProperty(BANK_ACCOUNT_PREFIX, bankAccountPrefix)
 }
 
 @Entity(name = "accounts")
@@ -70,9 +84,16 @@ interface AccountsRepository : JpaRepository<Account, BigDecimal> {
 data class NewAccountDTO(val accountHolderName: String)
 
 class CustomIdGenerator() : SequenceStyleGenerator() {
-    val prefix = "1234000"
+    private var prefix: String = "55555555"
     private val accountNumberLength = 24
+    private var isPrefixSet = false
     override fun generate(session: SharedSessionContractImplementor?, `object`: Any?): Any {
+        // during the running of the configure method, spring isn't finished with PrefixSetterConfig's PostConstruct
+        // so reading the prefix at first generation of a key is a workaround against this
+        if (!isPrefixSet) {
+            prefix = System.getProperty(BANK_ACCOUNT_PREFIX, prefix)
+            isPrefixSet = true
+        }
         val maxId: String = super.generate(session, `object`).toString()
         val concatenated: String = prefix + maxId.padStart(accountNumberLength - prefix.length, '0')
         return concatenated.toBigDecimal()

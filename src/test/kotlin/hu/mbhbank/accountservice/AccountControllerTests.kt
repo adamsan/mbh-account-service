@@ -81,6 +81,8 @@ class AccountControllerTests(@Autowired private val mockMvc: MockMvc) {
 
         id1 = JsonPath.parse(response).read<BigInteger>("$[0].accountNumber")
         id2 = JsonPath.parse(response).read<BigInteger>("$[1].accountNumber")
+        println("accountNumber[0]$id1")
+        println("accountNumber[1]$id2")
         val idToDelete = id2
         mockMvc.perform(delete("$ACCOUNT_URL/$idToDelete"))
 
