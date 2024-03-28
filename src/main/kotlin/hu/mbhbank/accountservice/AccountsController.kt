@@ -14,16 +14,17 @@ import org.hibernate.type.spi.TypeConfiguration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.web.bind.annotation.*
+import java.math.BigDecimal
 import java.util.*
 
 @RestController
 @RequestMapping("/api/v1/account")
 class AccountsController(@Autowired private val accountsRepository: AccountsRepository) {
     @GetMapping
-    fun get(): List<Account> = accountsRepository.findAll()
+    public fun get(): List<Account> = accountsRepository.findAll()
 
     @PostMapping
-    fun post(@RequestBody newAccountDTO: NewAccountDTO): Account {
+    public fun post(@RequestBody newAccountDTO: NewAccountDTO): Account {
         // TODO: generate unique id with bank prefix
         val account = Account(null, newAccountDTO.accountHolderName)
         accountsRepository.save(account)
@@ -40,7 +41,7 @@ data class Account(
                 strategy = "hu.mbhbank.accountservice.CustomIdGenerator",
                 parameters = [Parameter(name = "increment_size", value = "1")]
         )
-        val accountNumber: Long?,
+        val accountNumber: BigDecimal?,
         val accountHolderName: String,
         val isDeleted: Boolean = false) {}
 
@@ -50,8 +51,11 @@ data class NewAccountDTO(val accountHolderName: String)
 
 class CustomIdGenerator(): SequenceStyleGenerator() {
     val prefix = "1234000"
+    private val accountNumberLength = 24
     override fun generate(session: SharedSessionContractImplementor?, `object`: Any?): Any {
-        return (prefix + super.generate(session, `object`)).toLong()
+        val maxId: String = super.generate(session, `object`).toString()
+        val concatenated: String = prefix + maxId.padStart(accountNumberLength - prefix.length, '0')
+        return concatenated.toBigDecimal()
     }
 
     override fun configure(type: Type?, parameters: Properties?, serviceRegistry: ServiceRegistry?) {

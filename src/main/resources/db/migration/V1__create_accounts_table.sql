@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS accounts (
-    account_number BIGINT,
+    account_number DECIMAL(24,0),
     account_holder_name VARCHAR(255),
     is_deleted BOOLEAN,
     PRIMARY KEY (account_number)
