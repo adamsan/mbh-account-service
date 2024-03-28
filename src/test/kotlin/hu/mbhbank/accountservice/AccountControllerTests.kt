@@ -1,5 +1,6 @@
 package hu.mbhbank.accountservice
 
+import com.jayway.jsonpath.JsonPath
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
@@ -13,6 +14,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.hamcrest.Matchers.*
 import org.junit.jupiter.api.TestMethodOrder
 import org.springframework.test.context.ActiveProfiles
+import java.math.BigInteger
 
 private const val ACCOUNT_URL = "/api/v1/account"
 
@@ -55,7 +57,7 @@ class AccountControllerTests(@Autowired private val mockMvc: MockMvc) {
     @Order(3)
     @Test
     fun `get accounts should return all non deleted accounts`() {
-        mockMvc.perform(get(ACCOUNT_URL))
+        val response = mockMvc.perform(get(ACCOUNT_URL))
                 .andExpect(status().isOk)
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.length()").value(2))
@@ -63,5 +65,16 @@ class AccountControllerTests(@Autowired private val mockMvc: MockMvc) {
                 .andExpect(jsonPath("$[0].accountNumber").isNumber)
                 .andExpect(jsonPath("$[1].accountHolderName").value("Jane Doe"))
                 .andExpect(jsonPath("$[1].accountNumber").isNumber)
+                .andReturn().response.contentAsString
+
+        val idToDelete = JsonPath.parse(response).read<BigInteger>("$[1].accountNumber")
+        mockMvc.perform(delete("$ACCOUNT_URL/$idToDelete"))
+
+        mockMvc.perform(get(ACCOUNT_URL))
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].accountHolderName").value("John Doe"))
+                .andExpect(jsonPath("$[0].accountNumber").isNumber)
     }
 }

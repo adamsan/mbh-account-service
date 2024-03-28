@@ -13,6 +13,7 @@ import org.hibernate.type.Type
 import org.hibernate.type.spi.TypeConfiguration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 import java.util.*
@@ -21,7 +22,7 @@ import java.util.*
 @RequestMapping("/api/v1/account")
 class AccountsController(@Autowired private val accountsRepository: AccountsRepository) {
     @GetMapping
-    public fun get(): List<Account> = accountsRepository.findAll()
+    public fun get(): List<Account> = accountsRepository.findByIsDeletedIsFalse()
 
     @PostMapping
     public fun post(@RequestBody newAccountDTO: NewAccountDTO): Account {
@@ -29,6 +30,16 @@ class AccountsController(@Autowired private val accountsRepository: AccountsRepo
         val account = Account(null, newAccountDTO.accountHolderName)
         accountsRepository.save(account)
         return account
+    }
+
+    @DeleteMapping("/{id}")
+    public fun del(@PathVariable("id") id: BigDecimal): ResponseEntity<Account> {
+        return if (accountsRepository.existsById(id)) {
+            accountsRepository.findById(id).map {
+                ResponseEntity.ok(accountsRepository.save(it.copy(isDeleted = true)))
+            }.orElseThrow()
+        } else
+            ResponseEntity.notFound().build()
     }
 }
 
@@ -45,11 +56,13 @@ data class Account(
         val accountHolderName: String,
         val isDeleted: Boolean = false) {}
 
-interface AccountsRepository : JpaRepository<Account, Long> {}
+interface AccountsRepository : JpaRepository<Account, BigDecimal> {
+    fun findByIsDeletedIsFalse() :List<Account>
+}
 
 data class NewAccountDTO(val accountHolderName: String)
 
-class CustomIdGenerator(): SequenceStyleGenerator() {
+class CustomIdGenerator() : SequenceStyleGenerator() {
     val prefix = "1234000"
     private val accountNumberLength = 24
     override fun generate(session: SharedSessionContractImplementor?, `object`: Any?): Any {
@@ -59,7 +72,7 @@ class CustomIdGenerator(): SequenceStyleGenerator() {
     }
 
     override fun configure(type: Type?, parameters: Properties?, serviceRegistry: ServiceRegistry?) {
-        super.configure(TypeConfiguration().basicTypeRegistry.getRegisteredType(Long::class.java), parameters, serviceRegistry)
+        super.configure(TypeConfiguration().basicTypeRegistry.getRegisteredType(BigDecimal::class.java), parameters, serviceRegistry)
         parameters?.setProperty(SEQUENCE_PARAM, "accounts_seq")
         parameters?.setProperty(INCREMENT_PARAM, "1")
     }
