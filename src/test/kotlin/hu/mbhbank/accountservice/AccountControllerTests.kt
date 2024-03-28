@@ -1,9 +1,6 @@
 package hu.mbhbank.accountservice
 
 import com.jayway.jsonpath.JsonPath
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.MethodOrderer
-import org.junit.jupiter.api.Order
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -12,7 +9,10 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.hamcrest.Matchers.*
-import org.junit.jupiter.api.TestMethodOrder
+import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions.*
+import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.queryForObject
 import org.springframework.test.context.ActiveProfiles
 import java.math.BigInteger
 
@@ -23,6 +23,9 @@ private const val ACCOUNT_URL = "/api/v1/account"
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @ActiveProfiles("test")
 class AccountControllerTests(@Autowired private val mockMvc: MockMvc) {
+
+    @Autowired
+    lateinit var jdbc: JdbcTemplate
 
     @Order(1)
     @Test
@@ -76,5 +79,9 @@ class AccountControllerTests(@Autowired private val mockMvc: MockMvc) {
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].accountHolderName").value("John Doe"))
                 .andExpect(jsonPath("$[0].accountNumber").isNumber)
+
+        // check if delete does not really delete account from database
+        val rows = jdbc.queryForObject<Long>("select count(*) from accounts where account_number = $idToDelete")
+        assertEquals(1L, rows)
     }
 }
