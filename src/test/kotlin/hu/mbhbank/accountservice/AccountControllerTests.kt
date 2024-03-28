@@ -109,4 +109,15 @@ class AccountControllerTests(@Autowired private val mockMvc: MockMvc) {
         mockMvc.perform(get("$ACCOUNT_URL/$id2"))
                 .andExpect(status().isNotFound)
     }
+
+    @Order(5)
+    @Test
+    fun `update account works`() {
+        mockMvc.perform(put("$ACCOUNT_URL/$id1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"accountHolderName\":\"John Doe updated\"}"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.accountHolderName").value("John Doe updated"))
+
+    }
 }

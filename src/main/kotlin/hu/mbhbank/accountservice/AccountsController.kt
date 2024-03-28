@@ -30,13 +30,21 @@ class AccountsController(@Autowired private val accountsRepository: AccountsRepo
 
     @GetMapping("/{id}")
     public fun getById(@PathVariable("id") id: BigDecimal): ResponseEntity<Account> {
-        val maybeId = accountsRepository.findByIsDeletedIsFalseAndAccountNumberEquals(id)
-        return ResponseEntity.of(maybeId)
+        val maybeAccount = accountsRepository.findByIsDeletedIsFalseAndAccountNumberEquals(id)
+        return ResponseEntity.of(maybeAccount)
+    }
+
+    @PutMapping("/{id}")
+    public fun update(@PathVariable("id") id: BigDecimal, @RequestBody dto: AccountDTO): ResponseEntity<Account> {
+        val maybeAccount = accountsRepository.findByIsDeletedIsFalseAndAccountNumberEquals(id)
+        if(maybeAccount.isEmpty) return ResponseEntity.notFound().build()
+        val updatedAccount = accountsRepository.save(maybeAccount.get().copy(accountHolderName = dto.accountHolderName))
+        return ResponseEntity.ok(updatedAccount)
     }
 
     @PostMapping
-    public fun post(@RequestBody newAccountDTO: NewAccountDTO): Account {
-        val account = Account(null, newAccountDTO.accountHolderName)
+    public fun post(@RequestBody accountDTO: AccountDTO): Account {
+        val account = Account(null, accountDTO.accountHolderName)
         accountsRepository.save(account)
         return account
     }
@@ -81,7 +89,7 @@ interface AccountsRepository : JpaRepository<Account, BigDecimal> {
     fun findByIsDeletedIsFalseAndAccountNumberEquals(id: BigDecimal): Optional<Account>
 }
 
-data class NewAccountDTO(val accountHolderName: String)
+data class AccountDTO(val accountHolderName: String)
 
 class CustomIdGenerator() : SequenceStyleGenerator() {
     private var prefix: String = "55555555"
