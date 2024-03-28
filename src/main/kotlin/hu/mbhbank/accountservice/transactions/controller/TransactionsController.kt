@@ -57,5 +57,5 @@ enum class Type {
 }
 
 interface TransactionsRepository : JpaRepository<Transaction, UUID> {
-
+    fun findAllByAccountNumber(accountNumber: BigDecimal): List<Transaction>
 }

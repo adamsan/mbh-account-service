@@ -2,6 +2,8 @@ package hu.mbhbank.accountservice.accounts.controller
 
 import hu.mbhbank.accountservice.accounts.dao.AccountsRepository
 import hu.mbhbank.accountservice.accounts.model.Account
+import hu.mbhbank.accountservice.transactions.controller.TransactionsRepository
+import hu.mbhbank.accountservice.transactions.controller.Type
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -9,7 +11,10 @@ import java.math.BigDecimal
 
 @RestController
 @RequestMapping("/api/v1/account")
-class AccountsController(@Autowired private val accountsRepository: AccountsRepository) {
+class AccountsController(
+        @Autowired private val accountsRepository: AccountsRepository,
+        @Autowired private val transactionsRepository: TransactionsRepository
+) {
 
     @GetMapping
     public fun get(): List<Account> = accountsRepository.findByIsDeletedIsFalse()
@@ -20,10 +25,20 @@ class AccountsController(@Autowired private val accountsRepository: AccountsRepo
         return ResponseEntity.of(maybeAccount)
     }
 
+    @GetMapping("/{id}/balance")
+    public fun getBalanceById(@PathVariable("id") id: BigDecimal): ResponseEntity<Long> {
+        val maybeAccount = accountsRepository.findByIsDeletedIsFalseAndAccountNumberEquals(id)
+        if (maybeAccount.isEmpty) return ResponseEntity.notFound().build();
+
+        val transactions = transactionsRepository.findAllByAccountNumber(id)
+        val balance = transactions.map { if (it.type == Type.DEPOSIT) it.amount else -it.amount }.sum()
+        return ResponseEntity.ok(balance)
+    }
+
     @PutMapping("/{id}")
     public fun update(@PathVariable("id") id: BigDecimal, @RequestBody dto: AccountDTO): ResponseEntity<Account> {
         val maybeAccount = accountsRepository.findByIsDeletedIsFalseAndAccountNumberEquals(id)
-        if(maybeAccount.isEmpty) return ResponseEntity.notFound().build()
+        if (maybeAccount.isEmpty) return ResponseEntity.notFound().build()
         val updatedAccount = accountsRepository.save(maybeAccount.get().copy(accountHolderName = dto.accountHolderName))
         return ResponseEntity.ok(updatedAccount)
     }
