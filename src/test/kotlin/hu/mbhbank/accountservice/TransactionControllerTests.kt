@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.hamcrest.Matchers.*
 import java.math.BigInteger
+import java.time.LocalDateTime
 import java.util.UUID
 
 
@@ -95,6 +96,44 @@ class TransactionControllerTests(@Autowired private val mockMvc: MockMvc) {
                 .andExpect(status().isOk)
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$").value("140"))
+    }
 
+    @Order(5)
+    @Test
+    fun `transactions with past timestamp should be rejected`() {
+        val pastTimestamp = LocalDateTime.now().minusHours(1).toString()
+        val transactionString = """
+            {
+            "accountNumber": $accountId,
+            "type": "DEPOSIT",
+            "amount": 50,
+            "timestamp":"$pastTimestamp"
+            }
+        """.trimIndent()
+        mockMvc.perform(post(TRANSACTION_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(transactionString))
+                .andExpect(status().is4xxClientError)
+    }
+
+    @Order(6)
+    @Test
+    fun `transactions with future timestamp should be allowed`() {
+        val futureTimestamp = LocalDateTime.now().plusHours(1).toString()
+        val transactionString = """
+            {
+            "accountNumber": $accountId,
+            "type": "DEPOSIT",
+            "amount": 50,
+            "timestamp":"$futureTimestamp"
+            }
+        """.trimIndent()
+        val futureTimestampTruncated = futureTimestamp.substring(0, 27)
+        mockMvc.perform(post(TRANSACTION_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(transactionString))
+                .andExpect(status().isOk)
+                // returning timestamp missing 2 digits: 2024-03-29T23:55:39.020385400 vs 2024-03-29T23:55:39.0203854
+                .andExpect(jsonPath("$.timestamp").value(futureTimestampTruncated))
     }
 }

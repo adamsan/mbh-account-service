@@ -1,7 +1,6 @@
 package hu.mbhbank.accountservice.transactions.controller
 
 import jakarta.persistence.*
-import org.hibernate.annotations.CreationTimestamp
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.jpa.repository.JpaRepository
@@ -9,6 +8,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @RestController
@@ -20,10 +20,18 @@ class TransactionsController(@Autowired private val transactionsRepository: Tran
 
     @PostMapping
     fun create(@RequestBody transaction: Transaction): ResponseEntity<Transaction> {
-        try {
-            return ResponseEntity.ok(transactionsRepository.save(transaction.copy(uuid = UUID.randomUUID())))
+        return try {
+            // Transaction can't be in the past - let's say 500 msec delta is acceptable:
+            // When transaction timestamp is not submitted, then it's generated as a default value in the constructor
+            // of `Transaction`.
+            // It takes time, until the program execution reaches here.
+            val currentTimeMinusDelta = LocalDateTime.now().minus(500, ChronoUnit.MILLIS)
+            if (transaction.timestamp!!.isBefore(currentTimeMinusDelta))
+                ResponseEntity.badRequest().build()
+            else
+                ResponseEntity.ok(transactionsRepository.save(transaction.copy(uuid = UUID.randomUUID())))
         } catch (ex: DataIntegrityViolationException) {
-            return ResponseEntity.internalServerError().build()
+            ResponseEntity.internalServerError().build()
         }
     }
 
@@ -54,8 +62,7 @@ data class Transaction(
         @Enumerated(EnumType.ORDINAL)
         val type: Type,
         val amount: Long,
-        @CreationTimestamp
-        val timestamp: LocalDateTime?
+        val timestamp: LocalDateTime? = LocalDateTime.now()
 ) {}
 
 enum class Type {
