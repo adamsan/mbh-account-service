@@ -35,14 +35,6 @@ class AccountsController(
         return ResponseEntity.ok(balance)
     }
 
-    @PutMapping("/{id}")
-    public fun update(@PathVariable("id") id: BigDecimal, @RequestBody dto: AccountDTO): ResponseEntity<Account> {
-        val maybeAccount = accountsRepository.findByIsDeletedIsFalseAndAccountNumberEquals(id)
-        if (maybeAccount.isEmpty) return ResponseEntity.notFound().build()
-        val updatedAccount = accountsRepository.save(maybeAccount.get().copy(accountHolderName = dto.accountHolderName))
-        return ResponseEntity.ok(updatedAccount)
-    }
-
     @PostMapping
     public fun post(@RequestBody accountDTO: AccountDTO): Account {
         val account = Account(null, accountDTO.accountHolderName)

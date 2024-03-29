@@ -16,7 +16,7 @@ import org.springframework.jdbc.core.queryForObject
 import org.springframework.test.context.ActiveProfiles
 import java.math.BigInteger
 
-private const val ACCOUNT_URL = "/api/v1/account"
+const val ACCOUNT_URL = "/api/v1/account"
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -112,12 +112,10 @@ class AccountControllerTests(@Autowired private val mockMvc: MockMvc) {
 
     @Order(5)
     @Test
-    fun `update account works`() {
+    fun `update account is not allowed`() {
         mockMvc.perform(put("$ACCOUNT_URL/$id1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"accountHolderName\":\"John Doe updated\"}"))
-                .andExpect(status().isOk)
-                .andExpect(jsonPath("$.accountHolderName").value("John Doe updated"))
-
+                .andExpect(status().is4xxClientError)
     }
 }

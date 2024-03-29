@@ -3,7 +3,9 @@ package hu.mbhbank.accountservice.transactions.controller
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -17,8 +19,12 @@ class TransactionsController(@Autowired private val transactionsRepository: Tran
     public fun get(): List<Transaction> = transactionsRepository.findAll()
 
     @PostMapping
-    fun create(@RequestBody transaction: Transaction): Transaction {
-        return transactionsRepository.save(transaction.copy(uuid = UUID.randomUUID()))
+    fun create(@RequestBody transaction: Transaction): ResponseEntity<Transaction> {
+        try {
+            return ResponseEntity.ok(transactionsRepository.save(transaction.copy(uuid = UUID.randomUUID())))
+        } catch (ex: DataIntegrityViolationException) {
+            return ResponseEntity.internalServerError().build()
+        }
     }
 
     @GetMapping("/{uuid}")
