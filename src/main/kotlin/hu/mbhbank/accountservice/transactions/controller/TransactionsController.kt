@@ -63,6 +63,7 @@ class TransactionsController(
 data class Transaction(
         @Id
         @GeneratedValue(generator = "UUID")
+        @Column(columnDefinition = "uuid")
         val uuid: UUID?,
         val accountNumber: BigDecimal,
         @Enumerated(EnumType.ORDINAL)
