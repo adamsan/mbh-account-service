@@ -13,6 +13,7 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.queryForObject
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import java.math.BigInteger
 
@@ -22,6 +23,7 @@ const val ACCOUNT_URL = "/api/v1/account"
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @ActiveProfiles("test")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class AccountControllerTests(@Autowired private val mockMvc: MockMvc) {
 
     @Autowired
@@ -53,14 +55,14 @@ class AccountControllerTests(@Autowired private val mockMvc: MockMvc) {
     fun `creating new account should return the account`() {
         mockMvc.perform(post(ACCOUNT_URL)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"accountHolderName\":\"John Doe\"}"))
+                .content("""{"accountHolderName":"John Doe"}"""))
                 .andExpect(status().isOk)
                 .andExpect(jsonPath("$.accountHolderName").value("John Doe"))
                 .andExpect(jsonPath("$.accountNumber").isNumber)
 
         mockMvc.perform(post(ACCOUNT_URL)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"accountHolderName\":\"Jane Doe\"}"))
+                .content("""{"accountHolderName":"Jane Doe"}"""))
                 .andExpect(status().isOk)
                 .andExpect(jsonPath("$.accountHolderName").value("Jane Doe"))
                 .andExpect(jsonPath("$.accountNumber").isNumber)
@@ -115,7 +117,7 @@ class AccountControllerTests(@Autowired private val mockMvc: MockMvc) {
     fun `update account is not allowed`() {
         mockMvc.perform(put("$ACCOUNT_URL/$id1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"accountHolderName\":\"John Doe updated\"}"))
+                .content("""{"accountHolderName":"John Doe updated"}"""))
                 .andExpect(status().is4xxClientError)
     }
 }

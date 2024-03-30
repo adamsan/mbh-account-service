@@ -1,7 +1,7 @@
-CREATE TABLE transactions (
+CREATE TABLE IF NOT EXISTS transactions (
     uuid UUID PRIMARY KEY,
     account_number DECIMAL NOT NULL,
-    type INT NOT NULL,
+    type TINYINT NOT NULL,
     amount BIGINT NOT NULL,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
