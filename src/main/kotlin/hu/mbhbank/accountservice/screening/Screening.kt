@@ -4,6 +4,10 @@ import hu.mbhbank.accountservice.accounts.model.Account
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
+import jakarta.servlet.ServletContext
+import jakarta.transaction.Transactional
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.web.servlet.context.ServletWebServerInitializedEvent
@@ -100,7 +104,7 @@ data class SecurityResponse(
 interface SecurityResponseRepository : JpaRepository<SecurityResponse, BigDecimal>
 
 @Component
-class MyUrlProvider : ApplicationListener<ServletWebServerInitializedEvent> {
+class MyUrlProvider(private val servletContext: ServletContext) : ApplicationListener<ServletWebServerInitializedEvent> {
 
     private var serverPort: Int = 0
 
@@ -113,6 +117,8 @@ class MyUrlProvider : ApplicationListener<ServletWebServerInitializedEvent> {
     }
 
     fun getMyUrl(): String {
-        return "http://${serverAddress.hostAddress}:$serverPort"
+        val contextPath = servletContext.contextPath
+        val contextPathPrefix = if (contextPath.isNotBlank() && contextPath != "/") "$contextPath/" else ""
+        return "http://${serverAddress.hostAddress}:$serverPort$contextPathPrefix".removeSuffix("/")
     }
 }
