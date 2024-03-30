@@ -9,8 +9,8 @@ import jakarta.transaction.Transactional
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.web.servlet.context.ServletWebServerInitializedEvent
+import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.ApplicationListener
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Component
@@ -31,19 +31,29 @@ import kotlin.jvm.optionals.getOrElse
 class ScreeningController(
         @Autowired val screeningService: ScreeningService
 ) {
+    val logger: Logger = LoggerFactory.getLogger(ScreeningController::class.java)
+
     @PostMapping("/background-security-callback/{uuid}")
     fun receiveSecurityResult(@PathVariable("uuid") uuid: UUID, @RequestBody securityResponse: SecurityResponse) {
-        println("$uuid received")
-        println("$securityResponse received")
-        // TODO: check if uuid in request table, and accountNumbers match, then save response
+        logger.info("$uuid received")
+        logger.info("$securityResponse received")
+        // check if uuid in request table, and accountNumbers match, then save response
         screeningService.verifyAndStore(uuid, securityResponse)
     }
+}
+
+@FeignClient(name = "security-caller", url = "\${bank.background-security-check.url}")
+interface SecurityCaller {
+
+    @PostMapping
+    fun call(securityRequestDTO: SecurityRequestDTO)
 }
 
 @Service
 class ScreeningService(
         @Autowired val securityRequestRepository: SecurityRequestRepository,
-        @Autowired val securityResponseRepository: SecurityResponseRepository
+        @Autowired val securityResponseRepository: SecurityResponseRepository,
+        @Autowired val securityCaller: SecurityCaller
 ) {
 
     val logger: Logger = LoggerFactory.getLogger(ScreeningService::class.java)
@@ -51,21 +61,30 @@ class ScreeningService(
     @Autowired
     lateinit var myUrlProvider: MyUrlProvider
 
+    @Transactional
     fun requestScreening(acc: Account) {
         val securityRequest = SecurityRequest(acc.accountNumber!!, acc.accountHolderName)
         val callBackUrl = "${myUrlProvider.getMyUrl()}/api/v1/background-security-callback/${securityRequest.callbackUUID.toString()}"
+        logger.info("callback url: $callBackUrl")
         val securityRequestDTO = SecurityRequestDTO(acc.accountNumber, acc.accountHolderName, callBackUrl)
         // send securityRequestDTO to securityUrl - in a new thread
+        logger.info("Calling background-security-check with: $securityRequestDTO")
+        securityCaller.call(securityRequestDTO)
+        logger.info("Persisting background security check request")
         securityRequestRepository.save(securityRequest)
-
     }
 
     fun verifyAndStore(uuid: UUID, securityResponse: SecurityResponse) {
         val maybeSecurityRequest = securityRequestRepository.findById(uuid)
-        if (maybeSecurityRequest.isEmpty || maybeSecurityRequest.get().accountNumber != securityResponse.accountNumber) {
-            // TODO: log failed verification attempt
+        if (maybeSecurityRequest.isEmpty) {
+            logger.warn("Invalid verification attempt: no security request found for uuid:$uuid")
             return
         }
+        if (maybeSecurityRequest.get().accountNumber != securityResponse.accountNumber) {
+            logger.warn("Invalid verification attempt: account numbers don't match for uuid:$uuid")
+            return
+        }
+        logger.info("Persisting security response: $securityResponse")
         securityResponseRepository.save(securityResponse)
     }
 
