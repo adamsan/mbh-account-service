@@ -1,6 +1,6 @@
 create TABLE IF NOT EXISTS security_request (
     callbackUUID UUID PRIMARY KEY,
-    account_number DECIMAL NOT NULL,
+    account_number DECIMAL(24,0) NOT NULL,
     account_holder_name VARCHAR(255) NOT NULL
 );
 
