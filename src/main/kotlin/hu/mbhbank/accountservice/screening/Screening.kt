@@ -28,7 +28,7 @@ import kotlin.jvm.optionals.getOrElse
 
 @RestController
 @RequestMapping("/api/v1")
-class SceeningController(
+class ScreeningController(
         @Autowired val screeningService: ScreeningService
 ) {
     @PostMapping("/background-security-callback/{uuid}")
@@ -46,8 +46,7 @@ class ScreeningService(
         @Autowired val securityResponseRepository: SecurityResponseRepository
 ) {
 
-    @Value("\$bank.background-security-check.url")
-    lateinit var securityUrl: String
+    val logger: Logger = LoggerFactory.getLogger(ScreeningService::class.java)
 
     @Autowired
     lateinit var myUrlProvider: MyUrlProvider
