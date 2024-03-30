@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.math.BigDecimal
 import java.net.InetAddress
 import java.util.*
+import java.util.concurrent.ExecutorService
 import kotlin.jvm.optionals.getOrElse
 
 
@@ -53,7 +54,8 @@ interface SecurityCaller {
 class ScreeningService(
         @Autowired val securityRequestRepository: SecurityRequestRepository,
         @Autowired val securityResponseRepository: SecurityResponseRepository,
-        @Autowired val securityCaller: SecurityCaller
+        @Autowired val securityCaller: SecurityCaller,
+        @Autowired val executorService: ExecutorService
 ) {
 
     val logger: Logger = LoggerFactory.getLogger(ScreeningService::class.java)
@@ -67,11 +69,14 @@ class ScreeningService(
         val callBackUrl = "${myUrlProvider.getMyUrl()}/api/v1/background-security-callback/${securityRequest.callbackUUID.toString()}"
         logger.info("callback url: $callBackUrl")
         val securityRequestDTO = SecurityRequestDTO(acc.accountNumber, acc.accountHolderName, callBackUrl)
-        // send securityRequestDTO to securityUrl - in a new thread
-        logger.info("Calling background-security-check with: $securityRequestDTO")
-        securityCaller.call(securityRequestDTO)
+
         logger.info("Persisting background security check request")
         securityRequestRepository.save(securityRequest)
+        securityRequestRepository.flush()
+
+        // send securityRequestDTO to securityUrl - in a new thread
+        logger.info("Calling background-security-check with: $securityRequestDTO")
+        executorService.submit { securityCaller.call(securityRequestDTO) }
     }
 
     fun verifyAndStore(uuid: UUID, securityResponse: SecurityResponse) {
