@@ -33,7 +33,12 @@ class AccountsController(
         if (maybeAccount.isEmpty) return ResponseEntity.notFound().build()
 
         val transactions = transactionsRepository.findAllByAccountNumber(id)
-        val balance = transactions.map { if (it.type == Type.DEPOSIT) it.amount else -it.amount }.sum()
+        val balance = transactions.sumOf {
+            when (it.type) {
+                Type.DEPOSIT -> it.amount
+                Type.WITHDRAWAL -> -it.amount
+            }
+        }
         return ResponseEntity.ok(balance)
     }
 
