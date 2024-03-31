@@ -2,10 +2,9 @@ package hu.mbhbank.accountservice.accounts.controller
 
 import hu.mbhbank.accountservice.accounts.dao.AccountsRepository
 import hu.mbhbank.accountservice.accounts.model.Account
-import hu.mbhbank.accountservice.screening.ScreeningService
-import hu.mbhbank.accountservice.transactions.controller.TransactionsRepository
-import hu.mbhbank.accountservice.transactions.controller.Type
-import org.springframework.beans.factory.annotation.Autowired
+import hu.mbhbank.accountservice.screening.service.ScreeningService
+import hu.mbhbank.accountservice.transactions.model.TransactionsRepository
+import hu.mbhbank.accountservice.transactions.model.Type
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal

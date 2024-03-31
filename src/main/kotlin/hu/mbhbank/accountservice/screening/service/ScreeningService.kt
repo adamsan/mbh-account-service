@@ -1,9 +1,10 @@
-package hu.mbhbank.accountservice.screening
+package hu.mbhbank.accountservice.screening.service
 
 import hu.mbhbank.accountservice.accounts.model.Account
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.Id
+import hu.mbhbank.accountservice.screening.model.SecurityRequest
+import hu.mbhbank.accountservice.screening.model.SecurityRequestRepository
+import hu.mbhbank.accountservice.screening.model.SecurityResponse
+import hu.mbhbank.accountservice.screening.model.SecurityResponseRepository
 import jakarta.servlet.ServletContext
 import jakarta.transaction.Transactional
 import org.slf4j.Logger
@@ -11,36 +12,14 @@ import org.slf4j.LoggerFactory
 import org.springframework.boot.web.servlet.context.ServletWebServerInitializedEvent
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.ApplicationListener
-import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
 import java.math.BigDecimal
 import java.net.InetAddress
 import java.util.*
 import java.util.concurrent.ExecutorService
 import kotlin.jvm.optionals.getOrElse
-
-
-@RestController
-@RequestMapping("/api/v1")
-class ScreeningController(
-        val screeningService: ScreeningService
-) {
-    val logger: Logger = LoggerFactory.getLogger(ScreeningController::class.java)
-
-    @PostMapping("/background-security-callback/{uuid}")
-    fun receiveSecurityResult(@PathVariable("uuid") uuid: UUID, @RequestBody securityResponse: SecurityResponse) {
-        logger.info("$uuid received")
-        logger.info("$securityResponse received")
-        // check if uuid in request table, and accountNumbers match, then save response
-        screeningService.verifyAndStore(uuid, securityResponse)
-    }
-}
 
 @FeignClient(name = "security-caller", url = "\${bank.background-security-check.url}")
 interface SecurityCaller {
@@ -99,28 +78,6 @@ data class SecurityRequestDTO(
         val accountHolderName: String,
         val callbackUrl: String
 )
-
-@Entity
-data class SecurityRequest(
-        val accountNumber: BigDecimal,
-        val accountHolderName: String,
-        @Id
-        @Column(columnDefinition = "uuid") // https://stackoverflow.com/questions/70185764/unable-to-store-uuids-in-h2-2-0-202-with-hibernate/70205843#70205843
-        val callbackUUID: UUID? = UUID.randomUUID()
-)
-
-interface SecurityRequestRepository : JpaRepository<SecurityRequest, UUID> {
-
-}
-
-@Entity
-data class SecurityResponse(
-        @Id
-        val accountNumber: BigDecimal,
-        val isSecurityCheckSuccess: Boolean
-)
-
-interface SecurityResponseRepository : JpaRepository<SecurityResponse, BigDecimal>
 
 @Component
 class MyUrlProvider(private val servletContext: ServletContext) : ApplicationListener<ServletWebServerInitializedEvent> {
