@@ -152,4 +152,31 @@ class TransactionControllerTests(
                 // returning timestamp missing 2 digits: 2024-03-29T23:55:39.020385400 vs 2024-03-29T23:55:39.0203854
                 .andExpect(jsonPath("$.timestamp").value(futureTimestampTruncated))
     }
+
+    @Order(8)
+    @Test
+    fun `cannot create transaction on a deleted account`() {
+        mockMvc.perform(delete("$ACCOUNT_URL/$accountId"))
+
+        mockMvc.perform(post(TRANSACTION_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"accountNumber": $accountId, "type": "DEPOSIT", "amount": 100}"""))
+                .andExpect(status().isNotFound)
+    }
+
+    @Order(9)
+    @Test
+    fun `cannot query transactions of a deleted account`() {
+        mockMvc.perform(get(TRANSACTION_URL))
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").value(`is`(emptyList<Any>())))
+    }
+
+    @Order(10)
+    @Test
+    fun `cannot get balance of a deleted account`() {
+        mockMvc.perform(get("$ACCOUNT_URL/$accountId/balance"))
+                .andExpect(status().isNotFound)
+    }
 }
