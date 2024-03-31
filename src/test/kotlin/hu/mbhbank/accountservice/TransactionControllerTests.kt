@@ -16,6 +16,7 @@ import org.springframework.test.annotation.DirtiesContext
 import java.math.BigInteger
 import java.time.LocalDateTime
 import java.util.UUID
+import kotlin.math.min
 
 
 private const val TRANSACTION_URL = "/api/v1/transaction"
@@ -144,7 +145,7 @@ class TransactionControllerTests(
             "timestamp":"$futureTimestamp"
             }
         """.trimIndent()
-        val futureTimestampTruncated = futureTimestamp.substring(0, 27) // TODO: this can be out of bounds
+        val futureTimestampTruncated = futureTimestamp.substring(0, min(27, futureTimestamp.length))
         mockMvc.perform(post(TRANSACTION_URL)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(transactionString))
