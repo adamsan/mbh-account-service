@@ -27,7 +27,6 @@ class AccountsController(
     @Operation(
         summary = "Get accounts",
         description = "Returns with all (non deleted) accounts",
-        tags = ["get", "account"]
     )
     @ApiResponse(
         responseCode = "200", description = "List of non deleted accounts.",
@@ -41,7 +40,6 @@ class AccountsController(
     @Operation(
         summary = "Get account by account_number (24 digit code)",
         description = "Returns a single account, which has an account_number (24 digit code) as requested",
-        tags = ["get", "account"]
     )
     @ApiResponses(
         value = [

@@ -35,7 +35,7 @@ Use any of below commands:
 
 ### Start account service
 
-`java -jar build/libs/account-service.jar --bank.account.prefix=99887766`
+`java -jar build/libs/account-service-0.0.1.jar --bank.account.prefix=99887766`
 
 Or run with
 `./gradlew bootRun`
@@ -50,4 +50,4 @@ A suggested workaround is to copy the id from the terminal, which runs the secur
 ### Query the database (Optional)
 
 Visit: http://127.0.0.1:8080/account-service/h2-console/ and use the login information in application.properties, 
-username: 'sa' and no password
+jdbc url: `jdbc:h2:mem:accounts-db`, username: `sa` and no password
