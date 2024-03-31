@@ -20,26 +20,27 @@ class TransactionsController(
 ) {
 
     @GetMapping
-    fun get(): List<Transaction> = transactionsRepository.findAll()
+    fun get(): List<Transaction> = transactionsRepository.findAll().filter {
+        accountRepository.findByIsDeletedIsFalseAndAccountNumberEquals(it.accountNumber).isPresent //TODO: optimize this, too many queries
+    }
 
     @PostMapping
     fun create(@RequestBody transaction: Transaction): ResponseEntity<Transaction> {
         if (!screeningService.didAccountPassSecurityCheck(transaction.accountNumber)) {
             return ResponseEntity.notFound().build()
         }
-//        return try {
-            // Transaction can't be in the past - let's say 500 msec delta is acceptable:
-            // When transaction timestamp is not submitted, then it's generated as a default value in the constructor
-            // of `Transaction`.
-            // It takes time, until the program execution reaches here.
-            val currentTimeMinusDelta = LocalDateTime.now().minus(500, ChronoUnit.MILLIS)
-            return if (transaction.timestamp!!.isBefore(currentTimeMinusDelta))
-                ResponseEntity.badRequest().build()
-            else
-                ResponseEntity.ok(transactionsRepository.save(transaction.copy(uuid = UUID.randomUUID())))
-//        } catch (ex: DataIntegrityViolationException) {
-//            ResponseEntity.internalServerError().build()
-//        } TODO: remove try-catch, since screeningservice checks if accountNumber exists in DB
+        if (accountRepository.findByIsDeletedIsFalseAndAccountNumberEquals(transaction.accountNumber).isEmpty) {
+            return ResponseEntity.notFound().build()
+        }
+        // Transaction can't be in the past - let's say 500 msec delta is acceptable:
+        // When transaction timestamp is not submitted, then it's generated as a default value in the constructor
+        // of `Transaction`.
+        // It takes time, until the program execution reaches here.
+        val currentTimeMinusDelta = LocalDateTime.now().minus(500, ChronoUnit.MILLIS)
+        return if (transaction.timestamp!!.isBefore(currentTimeMinusDelta))
+            ResponseEntity.badRequest().build()
+        else
+            ResponseEntity.ok(transactionsRepository.save(transaction.copy(uuid = UUID.randomUUID())))
     }
 
     @GetMapping("/{uuid}")
