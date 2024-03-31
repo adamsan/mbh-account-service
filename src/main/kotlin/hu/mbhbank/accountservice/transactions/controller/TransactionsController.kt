@@ -4,6 +4,7 @@ import hu.mbhbank.accountservice.accounts.dao.AccountsRepository
 import hu.mbhbank.accountservice.screening.ScreeningService
 import jakarta.persistence.*
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
@@ -20,9 +21,7 @@ class TransactionsController(
 ) {
 
     @GetMapping
-    fun get(): List<Transaction> = transactionsRepository.findAll().filter {
-        accountRepository.findByIsDeletedIsFalseAndAccountNumberEquals(it.accountNumber).isPresent //TODO: optimize this, too many queries
-    }
+    fun get(): List<Transaction> = transactionsRepository.findAll()
 
     @PostMapping
     fun create(@RequestBody transaction: Transaction): ResponseEntity<Transaction> {
@@ -80,4 +79,12 @@ enum class Type {
 
 interface TransactionsRepository : JpaRepository<Transaction, UUID> {
     fun findAllByAccountNumber(accountNumber: BigDecimal): List<Transaction>
+
+    @Query(nativeQuery = true, value = """
+        select t.* from transactions t
+        join accounts a
+        on t.account_number = t.account_number
+        and a.is_deleted is False
+        """)
+    override fun findAll(): List<Transaction>
 }
