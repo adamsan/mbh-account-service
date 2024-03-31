@@ -61,5 +61,4 @@ class TransactionsController(
     }
 }
 
-class TransactionInPastException : RuntimeException() {
-}
+class TransactionInPastException : RuntimeException()

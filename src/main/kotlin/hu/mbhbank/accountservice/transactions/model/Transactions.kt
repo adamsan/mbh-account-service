@@ -18,7 +18,7 @@ data class Transaction(
         val type: Type,
         val amount: Long,
         val timestamp: LocalDateTime? = LocalDateTime.now()
-) {}
+)
 
 enum class Type {
     DEPOSIT, WITHDRAWAL

@@ -16,9 +16,7 @@ data class SecurityRequest(
         val callbackUUID: UUID? = UUID.randomUUID()
 )
 
-interface SecurityRequestRepository : JpaRepository<SecurityRequest, UUID> {
-
-}
+interface SecurityRequestRepository : JpaRepository<SecurityRequest, UUID>
 
 @Entity
 data class SecurityResponse(

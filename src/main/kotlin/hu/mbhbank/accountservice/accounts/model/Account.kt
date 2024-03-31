@@ -19,15 +19,6 @@ import java.util.*
 
 private const val BANK_ACCOUNT_PREFIX = "bank.account.prefix"
 
-@Component
-class PrefixSetterConfig() {
-    @Value("\${bank.account.prefix}")
-    public lateinit var bankAccountPrefix: String
-
-    @PostConstruct
-    fun postConstruct() = System.setProperty(BANK_ACCOUNT_PREFIX, bankAccountPrefix)
-}
-
 @Entity(name = "accounts")
 data class Account(
         @Id
@@ -39,7 +30,16 @@ data class Account(
         )
         val accountNumber: BigDecimal?,
         val accountHolderName: String,
-        val isDeleted: Boolean = false) {}
+        val isDeleted: Boolean = false)
+
+@Component
+class PrefixSetterConfig() {
+    @Value("\${bank.account.prefix}")
+    public lateinit var bankAccountPrefix: String
+
+    @PostConstruct
+    fun postConstruct() = System.setProperty(BANK_ACCOUNT_PREFIX, bankAccountPrefix)
+}
 
 class CustomIdGenerator() : SequenceStyleGenerator() {
     private var prefix: String = "55555555"
