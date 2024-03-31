@@ -40,6 +40,10 @@ Use any of below commands:
 Or run with
 `./gradlew bootRun`
 
+### Open Swagger
+
+http://127.0.0.1:8080/account-service/swagger-ui/index.html
+
 ### Query the database (Optional)
 
 Visit: http://127.0.0.1:8080/account-service/h2-console/ and use the login information in application.properties, 
