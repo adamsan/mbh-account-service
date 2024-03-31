@@ -13,9 +13,9 @@ import java.math.BigDecimal
 @RestController
 @RequestMapping("/api/v1/account")
 class AccountsController(
-        @Autowired private val accountsRepository: AccountsRepository,
-        @Autowired private val transactionsRepository: TransactionsRepository,
-        @Autowired private val screeningService: ScreeningService
+        private val accountsRepository: AccountsRepository,
+        private val transactionsRepository: TransactionsRepository,
+        private val screeningService: ScreeningService
 ) {
 
     @GetMapping

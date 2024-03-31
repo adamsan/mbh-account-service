@@ -8,7 +8,6 @@ import jakarta.servlet.ServletContext
 import jakarta.transaction.Transactional
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.web.servlet.context.ServletWebServerInitializedEvent
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.ApplicationListener
@@ -30,7 +29,7 @@ import kotlin.jvm.optionals.getOrElse
 @RestController
 @RequestMapping("/api/v1")
 class ScreeningController(
-        @Autowired val screeningService: ScreeningService
+        val screeningService: ScreeningService
 ) {
     val logger: Logger = LoggerFactory.getLogger(ScreeningController::class.java)
 
@@ -52,16 +51,13 @@ interface SecurityCaller {
 
 @Service
 class ScreeningService(
-        @Autowired val securityRequestRepository: SecurityRequestRepository,
-        @Autowired val securityResponseRepository: SecurityResponseRepository,
-        @Autowired val securityCaller: SecurityCaller,
-        @Autowired val executorService: ExecutorService
+        val securityRequestRepository: SecurityRequestRepository,
+        val securityResponseRepository: SecurityResponseRepository,
+        val securityCaller: SecurityCaller,
+        val executorService: ExecutorService,
+        val myUrlProvider: MyUrlProvider
 ) {
-
     val logger: Logger = LoggerFactory.getLogger(ScreeningService::class.java)
-
-    @Autowired
-    lateinit var myUrlProvider: MyUrlProvider
 
     @Transactional
     fun requestScreening(acc: Account) {

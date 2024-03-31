@@ -27,8 +27,7 @@ private const val TRANSACTION_URL = "/api/v1/transaction"
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class TransactionControllerTests(
         @Autowired private val mockMvc: MockMvc,
-        @Autowired
-        private val jdbc: JdbcTemplate
+        @Autowired private val jdbc: JdbcTemplate
 ) {
 
     companion object {

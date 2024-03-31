@@ -24,10 +24,10 @@ const val ACCOUNT_URL = "/api/v1/account"
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-class AccountControllerTests(@Autowired private val mockMvc: MockMvc) {
-
-    @Autowired
-    lateinit var jdbc: JdbcTemplate
+class AccountControllerTests(
+        @Autowired private val mockMvc: MockMvc,
+        @Autowired val jdbc: JdbcTemplate
+) {
 
     companion object {
         @JvmStatic

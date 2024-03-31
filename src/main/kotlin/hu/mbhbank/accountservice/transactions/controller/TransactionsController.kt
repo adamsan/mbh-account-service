@@ -1,8 +1,8 @@
 package hu.mbhbank.accountservice.transactions.controller
 
+import hu.mbhbank.accountservice.accounts.dao.AccountsRepository
 import hu.mbhbank.accountservice.screening.ScreeningService
 import jakarta.persistence.*
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -14,8 +14,9 @@ import java.util.*
 @RestController
 @RequestMapping("/api/v1/transaction")
 class TransactionsController(
-        @Autowired private val transactionsRepository: TransactionsRepository,
-        @Autowired private val screeningService: ScreeningService
+        private val transactionsRepository: TransactionsRepository,
+        private val screeningService: ScreeningService,
+        private val accountRepository: AccountsRepository
 ) {
 
     @GetMapping
