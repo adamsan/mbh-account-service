@@ -44,6 +44,9 @@ Or run with
 
 http://127.0.0.1:8080/account-service/swagger-ui/index.html
 
+Since Swagger UI displays BigDecimal numbers in a scientific notation, it's impossible to copy the generated account number from the response.
+A suggested workaround is to copy the id from the terminal, which runs the security check service. (Or use the H2-console, or use Postman.)
+
 ### Query the database (Optional)
 
 Visit: http://127.0.0.1:8080/account-service/h2-console/ and use the login information in application.properties, 
