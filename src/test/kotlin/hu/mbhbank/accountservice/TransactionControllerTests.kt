@@ -79,7 +79,7 @@ class TransactionControllerTests(
 
     @Order(4)
     @Test
-    fun `create new transaction with valid account`() { // TODO: Implement validity checking for account
+    fun `create new transaction with valid account`() {
         // fake external validation
         jdbc.update("insert into security_response values ($accountId, true)")
 

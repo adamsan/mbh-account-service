@@ -49,7 +49,7 @@ class ScreeningService(
         securityRequestRepository.save(securityRequest)
         securityRequestRepository.flush()
 
-        // send securityRequestDTO to securityUrl - in a new thread
+        // send securityRequestDTO to securityUrl - in a new thread - possibly would be better with Async?
         logger.info("Calling background-security-check with: $securityRequestDTO")
         executorService.submit { securityCaller.call(securityRequestDTO) }
     }

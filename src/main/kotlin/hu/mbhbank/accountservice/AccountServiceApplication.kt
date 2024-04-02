@@ -14,8 +14,7 @@ class AccountServiceApplication {
 
     @Bean
     fun executorService(): ExecutorService {
-        // since the tasks (sending a POST request) are not CPU heavy, I try to double the CPU size for threadpool size
-        val threadPoolSize = 2 * Runtime.getRuntime().availableProcessors()
+        val threadPoolSize = Runtime.getRuntime().availableProcessors()
         return Executors.newFixedThreadPool(threadPoolSize)
     }
 }

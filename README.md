@@ -8,7 +8,7 @@
 
 ### Run tests
 
-`/gradlew test -i`
+`./gradlew test -i`
 
 Tests are integration tests, but they don't require the `background-security-check` service.
 

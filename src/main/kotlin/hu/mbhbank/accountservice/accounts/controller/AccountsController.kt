@@ -117,7 +117,7 @@ class AccountsController(
     @PostMapping
     fun post(@RequestBody accountDTO: AccountDTO): Account {
         // TODO: Swagger doesn't display response properly, BigDecimal is displayed in scientific notation
-        // solution could be to return a different type with the account number is a string
+        // solution could be to return a different type with the account number as a string
         val account = Account(null, accountDTO.accountHolderName)
         val savedAccount = accountsRepository.save(account)
         screeningService.requestScreening(account)
